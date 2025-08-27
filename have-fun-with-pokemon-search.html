@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catch ’Em All: Pokémon Search</title>
+  <link rel="stylesheet" href="styles.css">
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>🎮 Catch ’Em All: Pokémon Search</h1>
+    <p>Type a Pokémon name or pick one from the list below, then hit <strong>Search</strong>!</p>
+  </header>
+
+  <main>
+    <div id="root"></div>
+
+    <section>
+      <h2>🌟 Pokémon Name Inspiration</h2>
+      <ul class="pokemon-list">
+        <li>Pikachu ⚡</li>
+        <li>Charizard 🔥</li>
+        <li>Bulbasaur 🌱</li>
+        <li>Squirtle 💧</li>
+        <li>Eevee ✨</li>
+        <li>Jigglypuff 🎵</li>
+        <li>Snorlax 💤</li>
+        <li>Mewtwo 🧠</li>
+        <li>Gengar 👻</li>
+        <li>Lapras ❄️</li>
+      </ul>
+    </section>
+  </main>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function PokemonSearch() {
+      const [query, setQuery] = useState("pikachu");
+      const [pokemon, setPokemon] = useState(null);
+      const [error, setError] = useState(null);
+
+      async function searchPokemon() {
+        if (!query) {
+          setError("Please enter a Pokémon name");
+          setPokemon(null);
+          return;
+        }
+        setError(null);
+        try {
+          const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${query.toLowerCase()}`);
+          if (!res.ok) throw new Error();
+          const data = await res.json();
+          setPokemon({
+            name: data.name,
+            sprite: data.sprites.front_default,
+            types: data.types.map(t => t.type.name),
+            weight: data.weight,
+            height: data.height,
+            stats: data.stats.map(s => ({ name: s.stat.name, value: s.base_stat }))
+          });
+        } catch {
+          setError("Pokémon not found 😢");
+          setPokemon(null);
+        }
+      }
+
+      useEffect(() => {
+        searchPokemon();
+      }, []);
+
+      return (
+        <div className="search-container">
+          <div className="input-group">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Enter Pokémon name..."
+            />
+            <button onClick={searchPokemon}>Search</button>
+          </div>
+
+          {error && <p className="error">{error}</p>}
+
+          {pokemon && (
+            <div className="pokemon-card">
+              <h2>{pokemon.name}</h2>
+              <img src={pokemon.sprite} alt={pokemon.name} className="pokemon-image" />
+              <p><strong>Types:</strong> {pokemon.types.join(", ")}</p>
+              <p><strong>Height:</strong> {pokemon.height} | <strong>Weight:</strong> {pokemon.weight}</p>
+              <table>
+                <tbody>
+                  {pokemon.stats.map(s => (
+                    <tr key={s.name}>
+                      <td>{s.name}</td>
+                      <td>{s.value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<PokemonSearch />);
+  </script>
+</body>
+</html>
